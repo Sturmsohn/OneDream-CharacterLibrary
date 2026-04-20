@@ -1,0 +1,58 @@
+## Visual Studio / .NET build artifacts
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio cache / user files
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+
+## NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+## Rider / ReSharper (in case you ever use them)
+.idea/
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+## OS cruft
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+## --- Project-specific ---
+
+## SQLite database and WAL sidecar files (user data, not source)
+CharacterLibrary.db
+CharacterLibrary.db-shm
+CharacterLibrary.db-wal
+
+## Imported character portraits (user data)
+Images/
+
+## Published output
+publish/
+*.publishsettings
+PublishScripts/
+
+## JSON exports (if you export into the project folder)
+*.export.json
