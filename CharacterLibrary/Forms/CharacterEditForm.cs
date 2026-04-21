@@ -16,17 +16,27 @@ namespace CharacterLibrary.Forms
 
         // Basic tab
         private readonly TextBox _nameBox;
-        private readonly ComboBox _typeCombo;
+        private readonly CheckBox _isRealisticCheck;
+        private readonly CheckBox _isAnimeCheck;
         private readonly NumericUpDown _ageNum;
         private readonly TextBox _firstReplyBox;
+
+        // Realistic image
         private readonly TextBox _imagePathBox;
         private readonly Button _browseImageBtn;
         private readonly Button _clearImageBtn;
-        private readonly PictureBox _imagePreview = null!;
+        private readonly PictureBox _imagePreview;
+
+        // Anime image
+        private readonly TextBox _animeImagePathBox;
+        private readonly Button _browseAnimeImageBtn;
+        private readonly Button _clearAnimeImageBtn;
+        private readonly PictureBox _animeImagePreview;
+
         private readonly CheckedListBox _tagList;
         private readonly TextBox _newTagBox;
         private readonly Button _addTagBtn;
-        private readonly Label _tagCountLabel = null!;
+        private readonly Label _tagCountLabel;
 
         // Appearance
         private readonly TextBox _hairStyle, _bodyType, _skinTone, _breastSize, _ethnicity, _buttSize, _eyeColor, _hairColor;
@@ -64,10 +74,19 @@ namespace CharacterLibrary.Forms
             basicLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
             _nameBox = new TextBox { Dock = DockStyle.Fill, MaxLength = 100 };
-            _typeCombo = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
-            _typeCombo.Items.Add(CharacterType.Realistic);
-            _typeCombo.Items.Add(CharacterType.Anime);
-            _typeCombo.SelectedIndex = 0;
+
+            // Type checkboxes in a flow panel
+            var typePanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoSize = true
+            };
+            _isRealisticCheck = new CheckBox { Text = "Realistic", AutoSize = true, Margin = new Padding(0, 3, 16, 0) };
+            _isAnimeCheck = new CheckBox { Text = "Anime", AutoSize = true, Margin = new Padding(0, 3, 0, 0) };
+            typePanel.Controls.Add(_isRealisticCheck);
+            typePanel.Controls.Add(_isAnimeCheck);
 
             _ageNum = new NumericUpDown
             {
@@ -79,19 +98,19 @@ namespace CharacterLibrary.Forms
 
             _firstReplyBox = new TextBox { Dock = DockStyle.Fill, MaxLength = 100 };
 
-            // Image row (path + browse + clear)
-            var imageRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, Height = 28, Margin = new Padding(0) };
-            imageRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            imageRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            imageRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            // --- Realistic image row ---
+            var realImageRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, Height = 28, Margin = new Padding(0) };
+            realImageRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            realImageRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            realImageRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             _imagePathBox = new TextBox { Dock = DockStyle.Fill, ReadOnly = true };
             _browseImageBtn = new Button { Text = "Browse…", AutoSize = true };
-            _browseImageBtn.Click += (s, e) => PickImage();
+            _browseImageBtn.Click += (s, e) => PickImage(false);
             _clearImageBtn = new Button { Text = "Clear", AutoSize = true };
             _clearImageBtn.Click += (s, e) => { _imagePathBox.Text = ""; _imagePreview.Image?.Dispose(); _imagePreview.Image = null; };
-            imageRow.Controls.Add(_imagePathBox, 0, 0);
-            imageRow.Controls.Add(_browseImageBtn, 1, 0);
-            imageRow.Controls.Add(_clearImageBtn, 2, 0);
+            realImageRow.Controls.Add(_imagePathBox, 0, 0);
+            realImageRow.Controls.Add(_browseImageBtn, 1, 0);
+            realImageRow.Controls.Add(_clearImageBtn, 2, 0);
 
             _imagePreview = new PictureBox
             {
@@ -101,12 +120,70 @@ namespace CharacterLibrary.Forms
                 BorderStyle = BorderStyle.FixedSingle
             };
 
+            // --- Anime image row ---
+            var animeImageRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, Height = 28, Margin = new Padding(0) };
+            animeImageRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            animeImageRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            animeImageRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            _animeImagePathBox = new TextBox { Dock = DockStyle.Fill, ReadOnly = true };
+            _browseAnimeImageBtn = new Button { Text = "Browse…", AutoSize = true };
+            _browseAnimeImageBtn.Click += (s, e) => PickImage(true);
+            _clearAnimeImageBtn = new Button { Text = "Clear", AutoSize = true };
+            _clearAnimeImageBtn.Click += (s, e) => { _animeImagePathBox.Text = ""; _animeImagePreview.Image?.Dispose(); _animeImagePreview.Image = null; };
+            animeImageRow.Controls.Add(_animeImagePathBox, 0, 0);
+            animeImageRow.Controls.Add(_browseAnimeImageBtn, 1, 0);
+            animeImageRow.Controls.Add(_clearAnimeImageBtn, 2, 0);
+
+            _animeImagePreview = new PictureBox
+            {
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Dock = DockStyle.Fill,
+                Height = 220,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+
+            // --- Side-by-side image container (2 columns, 2 rows) ---
+            // Row 0: path+browse+clear for each
+            // Row 1: preview for each
+            var imageContainer = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 2,
+                Margin = new Padding(0)
+            };
+            imageContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            imageContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            imageContainer.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            imageContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            // Sub-headers inside the container
+            var realHeader = new Label { Text = "Realistic:", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font(SystemFonts.DefaultFont, FontStyle.Bold) };
+            var animeHeader = new Label { Text = "Anime:", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font(SystemFonts.DefaultFont, FontStyle.Bold), Margin = new Padding(6, 0, 0, 0) };
+
+            // Wrap each image row with its header in a small panel
+            var realTop = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = new Padding(0) };
+            realTop.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
+            realTop.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            realTop.Controls.Add(realHeader, 0, 0);
+            realTop.Controls.Add(realImageRow, 1, 0);
+
+            var animeTop = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = new Padding(0) };
+            animeTop.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 55));
+            animeTop.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            animeTop.Controls.Add(animeHeader, 0, 0);
+            animeTop.Controls.Add(animeImageRow, 1, 0);
+
+            imageContainer.Controls.Add(realTop, 0, 0);
+            imageContainer.Controls.Add(animeTop, 1, 0);
+            imageContainer.Controls.Add(_imagePreview, 0, 1);
+            imageContainer.Controls.Add(_animeImagePreview, 1, 1);
+
             AddRow(basicLayout, "Name *", _nameBox);
-            AddRow(basicLayout, "Character Type *", _typeCombo);
+            AddRow(basicLayout, "Type", typePanel);
             AddRow(basicLayout, "Age", _ageNum);
             AddRow(basicLayout, "First Reply Suggestion", _firstReplyBox);
-            AddRow(basicLayout, "Image", imageRow);
-            AddRow(basicLayout, "", _imagePreview, rowHeight: 220);
+            AddRow(basicLayout, "Images", imageContainer, rowHeight: 258);
 
             // Tags area
             _tagList = new CheckedListBox
@@ -115,12 +192,9 @@ namespace CharacterLibrary.Forms
                 CheckOnClick = true,
                 IntegralHeight = false
             };
+            _tagCountLabel = new Label { AutoSize = true, Margin = new Padding(6, 6, 0, 0) };
             _tagList.ItemCheck += (s, e) =>
             {
-                // ItemCheck fires BEFORE the check state flips, so GetItemChecked(e.Index)
-                // still returns the OLD value. Compute the post-change count directly from
-                // the event args instead of deferring with BeginInvoke (which would throw
-                // during construction, before the window handle exists).
                 int n = 0;
                 for (int i = 0; i < _tagList.Items.Count; i++)
                 {
@@ -137,7 +211,6 @@ namespace CharacterLibrary.Forms
             _newTagBox.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; AddInlineTag(); } };
             _addTagBtn = new Button { Text = "Add Tag", AutoSize = true };
             _addTagBtn.Click += (s, e) => AddInlineTag();
-            _tagCountLabel = new Label { AutoSize = true, Margin = new Padding(6, 6, 0, 0) };
 
             var tagBottom = new TableLayoutPanel { Dock = DockStyle.Bottom, Height = 32, ColumnCount = 3 };
             tagBottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -308,19 +381,27 @@ namespace CharacterLibrary.Forms
             panel.Controls.Add(control, 1, row);
         }
 
-        private void PickImage()
+        private void PickImage(bool anime)
         {
             using var dlg = new OpenFileDialog
             {
-                Title = "Choose image",
+                Title = anime ? "Choose anime image" : "Choose realistic image",
                 Filter = "Image files|*.png;*.jpg;*.jpeg;*.gif;*.bmp;*.webp|All files|*.*"
             };
             if (dlg.ShowDialog(this) != DialogResult.OK) return;
             try
             {
                 var rel = ImageService.ImportImage(dlg.FileName);
-                _imagePathBox.Text = rel;
-                LoadImagePreview(rel);
+                if (anime)
+                {
+                    _animeImagePathBox.Text = rel;
+                    LoadImagePreview(rel, _animeImagePreview);
+                }
+                else
+                {
+                    _imagePathBox.Text = rel;
+                    LoadImagePreview(rel, _imagePreview);
+                }
             }
             catch (Exception ex)
             {
@@ -329,16 +410,16 @@ namespace CharacterLibrary.Forms
             }
         }
 
-        private void LoadImagePreview(string? relativePath)
+        private static void LoadImagePreview(string? relativePath, PictureBox preview)
         {
-            _imagePreview.Image?.Dispose();
-            _imagePreview.Image = null;
+            preview.Image?.Dispose();
+            preview.Image = null;
             var abs = ImageService.ResolveAbsolute(relativePath);
             if (abs == null) return;
             try
             {
                 using var fs = new FileStream(abs, FileMode.Open, FileAccess.Read, FileShare.Read);
-                _imagePreview.Image = Image.FromStream(fs);
+                preview.Image = Image.FromStream(fs);
             }
             catch
             {
@@ -377,7 +458,6 @@ namespace CharacterLibrary.Forms
                 db.SaveChanges();
             }
 
-            // Reload list, re-preserving existing checks, and check the new one.
             var previouslyChecked = GetCheckedTagIds().ToHashSet();
             previouslyChecked.Add(tag.Id);
 
@@ -431,11 +511,15 @@ namespace CharacterLibrary.Forms
             if (c == null) return;
 
             _nameBox.Text = c.Name;
-            _typeCombo.SelectedItem = c.CharacterType;
+            _isRealisticCheck.Checked = c.IsRealistic;
+            _isAnimeCheck.Checked = c.IsAnime;
             _ageNum.Value = c.Age < 0 ? 0 : c.Age;
             _firstReplyBox.Text = c.FirstReplySuggestion ?? "";
+
             _imagePathBox.Text = c.ImagePath ?? "";
-            LoadImagePreview(c.ImagePath);
+            LoadImagePreview(c.ImagePath, _imagePreview);
+            _animeImagePathBox.Text = c.AnimeImagePath ?? "";
+            LoadImagePreview(c.AnimeImagePath, _animeImagePreview);
 
             _hairStyle.Text  = c.HairStyle ?? "";
             _bodyType.Text   = c.BodyType ?? "";
@@ -479,12 +563,6 @@ namespace CharacterLibrary.Forms
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            if (_typeCombo.SelectedItem is not CharacterType selectedType)
-            {
-                MessageBox.Show("Character Type is required.", "Validation",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
 
             var checkedIds = GetCheckedTagIds().ToList();
             if (checkedIds.Count > 20)
@@ -496,15 +574,15 @@ namespace CharacterLibrary.Forms
 
             using var db = new CharacterDbContext();
 
-            // Enforce unique (Name, CharacterType)
             var name = _nameBox.Text.Trim();
+
+            // Enforce unique Name
             var conflict = db.Characters.Any(c =>
                 c.Name == name &&
-                c.CharacterType == selectedType &&
                 (!_editingId.HasValue || c.Id != _editingId.Value));
             if (conflict)
             {
-                MessageBox.Show($"A {selectedType} character named \"{name}\" already exists.",
+                MessageBox.Show($"A character named \"{name}\" already exists.",
                     "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -523,10 +601,12 @@ namespace CharacterLibrary.Forms
             }
 
             entity.Name = name;
-            entity.CharacterType = selectedType;
+            entity.IsRealistic = _isRealisticCheck.Checked;
+            entity.IsAnime = _isAnimeCheck.Checked;
             entity.Age = (long)_ageNum.Value;
             entity.FirstReplySuggestion = NullIfEmpty(_firstReplyBox.Text);
             entity.ImagePath = NullIfEmpty(_imagePathBox.Text);
+            entity.AnimeImagePath = NullIfEmpty(_animeImagePathBox.Text);
 
             entity.HairStyle  = NullIfEmpty(_hairStyle.Text);
             entity.BodyType   = NullIfEmpty(_bodyType.Text);

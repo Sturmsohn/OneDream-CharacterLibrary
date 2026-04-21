@@ -7,18 +7,20 @@ namespace CharacterLibrary.Models
     /// (Appearance + Personality + Other). Tags are a separate many-to-many
     /// relationship through CharacterTag.
     ///
-    /// Natural unique key: (Name, CharacterType). Configured in DbContext.
+    /// Natural unique key: Name (configured in DbContext).
+    /// A character can be flagged as Realistic, Anime, both, or neither.
     /// </summary>
     public class Character
     {
         // --- Identity ---
         public int Id { get; set; }
 
-        // --- Other ---
+        // --- Basic ---
         [Required, MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        public CharacterType CharacterType { get; set; }
+        public bool IsRealistic { get; set; }
+        public bool IsAnime { get; set; }
 
         // long (Int64) instead of int so "absurd" ages (ancient beings, eldritch,
         // etc.) always fit. Regular int maxes out around 2.1 billion which is
@@ -50,8 +52,9 @@ namespace CharacterLibrary.Models
         [MaxLength(50000)] public string? ExtraDetails { get; set; }
 
         // --- Media ---
-        // Relative path (e.g. "Images/abc123.png") into the app's Images folder.
-        [MaxLength(500)]   public string? ImagePath { get; set; }
+        // Relative paths (e.g. "Images/abc123.png") into the app's Images folder.
+        [MaxLength(500)]   public string? ImagePath { get; set; }       // Realistic portrait
+        [MaxLength(500)]   public string? AnimeImagePath { get; set; }  // Anime portrait
 
         // --- Timestamps ---
         public DateTime CreatedAt { get; set; }

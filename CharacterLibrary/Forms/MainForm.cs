@@ -14,6 +14,11 @@ namespace CharacterLibrary.Forms
         private readonly StatusStrip _statusStrip;
         private readonly ToolStripStatusLabel _statusLabel;
 
+        // Filter values stored as strings for clarity
+        private const string FilterAll = "All types";
+        private const string FilterRealistic = "Realistic";
+        private const string FilterAnime = "Anime";
+
         public MainForm()
         {
             Text = "Character Library";
@@ -46,9 +51,9 @@ namespace CharacterLibrary.Forms
             _searchBox.TextChanged += (s, e) => RefreshList();
 
             _typeFilter = new ComboBox { Width = 130, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(6, 3, 0, 0) };
-            _typeFilter.Items.Add("All types");
-            _typeFilter.Items.Add(CharacterType.Realistic);
-            _typeFilter.Items.Add(CharacterType.Anime);
+            _typeFilter.Items.Add(FilterAll);
+            _typeFilter.Items.Add(FilterRealistic);
+            _typeFilter.Items.Add(FilterAnime);
             _typeFilter.SelectedIndex = 0;
             _typeFilter.SelectedIndexChanged += (s, e) => RefreshList();
 
@@ -169,8 +174,15 @@ namespace CharacterLibrary.Forms
         {
             public int Id { get; set; }
             public string Name { get; set; } = "";
-            public CharacterType CharacterType { get; set; }
-            public string TypeText => CharacterType.ToString();
+            public bool IsRealistic { get; set; }
+            public bool IsAnime { get; set; }
+            public string TypeText => (IsRealistic, IsAnime) switch
+            {
+                (true,  true)  => "Realistic + Anime",
+                (true,  false) => "Realistic",
+                (false, true)  => "Anime",
+                _              => "(none)"
+            };
             public long Age { get; set; }
             public string AgeText => Age.ToString("N0");
             public string TagsText { get; set; } = "";
@@ -209,8 +221,11 @@ namespace CharacterLibrary.Forms
                     .AsQueryable();
 
                 // Type filter
-                if (_typeFilter.SelectedItem is CharacterType t)
-                    query = query.Where(c => c.CharacterType == t);
+                var filterVal = _typeFilter.SelectedItem as string;
+                if (filterVal == FilterRealistic)
+                    query = query.Where(c => c.IsRealistic);
+                else if (filterVal == FilterAnime)
+                    query = query.Where(c => c.IsAnime);
 
                 // Tag filter
                 if (_tagFilter.SelectedIndex > 0)
@@ -232,12 +247,12 @@ namespace CharacterLibrary.Forms
 
                 var rows = query
                     .OrderBy(c => c.Name)
-                    .ThenBy(c => c.CharacterType)
                     .Select(c => new CharacterRow
                     {
                         Id = c.Id,
                         Name = c.Name,
-                        CharacterType = c.CharacterType,
+                        IsRealistic = c.IsRealistic,
+                        IsAnime = c.IsAnime,
                         Age = c.Age,
                         TagsText = string.Join(", ", c.CharacterTags.Select(ct => ct.Tag.Name)),
                         ModifiedAt = c.ModifiedAt
@@ -303,17 +318,18 @@ namespace CharacterLibrary.Forms
                 .FirstOrDefault(c => c.Id == id.Value);
             if (src == null) return;
 
-            // Find a non-colliding name: "<Name> (Copy)", "<Name> (Copy 2)", …
+            // Find a non-colliding name: "<n> (Copy)", "<n> (Copy 2)", …
             string baseName = src.Name + " (Copy)";
             string candidate = baseName;
             int n = 2;
-            while (db.Characters.Any(c => c.Name == candidate && c.CharacterType == src.CharacterType))
+            while (db.Characters.Any(c => c.Name == candidate))
                 candidate = $"{baseName} {n++}";
 
             var copy = new Character
             {
                 Name = candidate,
-                CharacterType = src.CharacterType,
+                IsRealistic = src.IsRealistic,
+                IsAnime = src.IsAnime,
                 Age = src.Age,
                 HairStyle = src.HairStyle,
                 BodyType = src.BodyType,
@@ -335,7 +351,8 @@ namespace CharacterLibrary.Forms
                 Scenario = src.Scenario,
                 AdditionalPersonalityDetails = src.AdditionalPersonalityDetails,
                 ExtraDetails = src.ExtraDetails,
-                ImagePath = src.ImagePath // points to same image file; that's fine
+                ImagePath = src.ImagePath,          // points to same image file; that's fine
+                AnimeImagePath = src.AnimeImagePath  // same
             };
             db.Characters.Add(copy);
             db.SaveChanges();

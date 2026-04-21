@@ -35,13 +35,8 @@ namespace CharacterLibrary.Data
         {
             modelBuilder.Entity<Character>(e =>
             {
-                // Natural unique key: (Name, CharacterType)
-                e.HasIndex(c => new { c.Name, c.CharacterType }).IsUnique();
-
-                // Store enum as readable string in the DB rather than an int
-                e.Property(c => c.CharacterType)
-                 .HasConversion<string>()
-                 .HasMaxLength(16);
+                // Natural unique key: Name
+                e.HasIndex(c => c.Name).IsUnique();
             });
 
             modelBuilder.Entity<Tag>(e =>

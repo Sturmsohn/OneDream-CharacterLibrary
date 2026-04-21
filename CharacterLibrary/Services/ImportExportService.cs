@@ -14,7 +14,8 @@ namespace CharacterLibrary.Services
     public class CharacterExportDto
     {
         public string Name { get; set; } = string.Empty;
-        public CharacterType CharacterType { get; set; }
+        public bool IsRealistic { get; set; }
+        public bool IsAnime { get; set; }
         public long Age { get; set; }
 
         public string? HairStyle { get; set; }
@@ -39,7 +40,8 @@ namespace CharacterLibrary.Services
         public string? AdditionalPersonalityDetails { get; set; }
         public string? ExtraDetails { get; set; }
 
-        public string? ImagePath { get; set; }
+        public string? ImagePath { get; set; }       // Realistic portrait
+        public string? AnimeImagePath { get; set; }  // Anime portrait
 
         public DateTime CreatedAt { get; set; }
         public DateTime ModifiedAt { get; set; }
@@ -78,7 +80,7 @@ namespace CharacterLibrary.Services
         private static int GetId(CharacterDbContext db, CharacterExportDto dto)
         {
             return db.Characters
-                .Where(c => c.Name == dto.Name && c.CharacterType == dto.CharacterType)
+                .Where(c => c.Name == dto.Name)
                 .Select(c => c.Id)
                 .FirstOrDefault();
         }
@@ -92,7 +94,8 @@ namespace CharacterLibrary.Services
                 .Select(c => new CharacterExportDto
                 {
                     Name = c.Name,
-                    CharacterType = c.CharacterType,
+                    IsRealistic = c.IsRealistic,
+                    IsAnime = c.IsAnime,
                     Age = c.Age,
                     HairStyle = c.HairStyle,
                     BodyType = c.BodyType,
@@ -115,6 +118,7 @@ namespace CharacterLibrary.Services
                     AdditionalPersonalityDetails = c.AdditionalPersonalityDetails,
                     ExtraDetails = c.ExtraDetails,
                     ImagePath = c.ImagePath,
+                    AnimeImagePath = c.AnimeImagePath,
                     CreatedAt = c.CreatedAt,
                     ModifiedAt = c.ModifiedAt,
                     Tags = c.CharacterTags.Select(ct => ct.Tag.Name).ToList()
@@ -126,9 +130,9 @@ namespace CharacterLibrary.Services
 
         /// <summary>
         /// Imports from a JSON file. File may contain a single object or an array.
-        /// If a character with the same (Name, CharacterType) already exists it will
-        /// be updated in place; otherwise a new one is created. Tag list is replaced
-        /// wholesale with the imported set.
+        /// Matching is by Name (unique key). If a character with the same Name already
+        /// exists it will be updated in place; otherwise a new one is created. Tag list
+        /// is replaced wholesale with the imported set.
         /// </summary>
         public static ImportResult Import(string path)
         {
@@ -144,15 +148,11 @@ namespace CharacterLibrary.Services
 
                 var existing = db.Characters
                     .Include(c => c.CharacterTags)
-                    .FirstOrDefault(c => c.Name == dto.Name && c.CharacterType == dto.CharacterType);
+                    .FirstOrDefault(c => c.Name == dto.Name);
 
                 if (existing == null)
                 {
-                    existing = new Character
-                    {
-                        Name = dto.Name,
-                        CharacterType = dto.CharacterType
-                    };
+                    existing = new Character { Name = dto.Name };
                     db.Characters.Add(existing);
                     added++;
                 }
@@ -161,6 +161,8 @@ namespace CharacterLibrary.Services
                     updated++;
                 }
 
+                existing.IsRealistic = dto.IsRealistic;
+                existing.IsAnime = dto.IsAnime;
                 existing.Age = dto.Age;
                 existing.HairStyle = dto.HairStyle;
                 existing.BodyType = dto.BodyType;
@@ -183,6 +185,7 @@ namespace CharacterLibrary.Services
                 existing.AdditionalPersonalityDetails = dto.AdditionalPersonalityDetails;
                 existing.ExtraDetails = dto.ExtraDetails;
                 existing.ImagePath = dto.ImagePath;
+                existing.AnimeImagePath = dto.AnimeImagePath;
 
                 db.SaveChanges(); // commit so we have an Id for new characters
 
