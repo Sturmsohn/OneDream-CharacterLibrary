@@ -8,7 +8,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>CharacterLibrary</RootNamespace>
     <AssemblyName>CharacterLibrary</AssemblyName>
-    <Version>$(VersionPrefix)1.0.2</Version>
+    <Version>$(VersionPrefix)1.0.3</Version>
+    <AssemblyVersion>1.0.3.0</AssemblyVersion>
+    <FileVersion>1.0.3.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
