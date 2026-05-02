@@ -60,6 +60,9 @@ namespace CharacterLibrary.Services
             Converters = { new JsonStringEnumConverter() }
         };
 
+        private static string? ToLf(string? s) =>
+            string.IsNullOrEmpty(s) ? s : s.Replace("\r\n", "\n").Replace("\r", "\n");
+
         // ---------- Export ----------
 
         public static void ExportAll(string path)
@@ -164,26 +167,26 @@ namespace CharacterLibrary.Services
                 existing.IsRealistic = dto.IsRealistic;
                 existing.IsAnime = dto.IsAnime;
                 existing.Age = dto.Age;
-                existing.HairStyle = dto.HairStyle;
-                existing.BodyType = dto.BodyType;
-                existing.SkinTone = dto.SkinTone;
-                existing.BreastSize = dto.BreastSize;
-                existing.Ethnicity = dto.Ethnicity;
-                existing.ButtSize = dto.ButtSize;
-                existing.EyeColor = dto.EyeColor;
-                existing.HairColor = dto.HairColor;
-                existing.CustomPhysicalDetails = dto.CustomPhysicalDetails;
-                existing.CustomFaceDetails = dto.CustomFaceDetails;
-                existing.Occupation = dto.Occupation;
-                existing.Relationship = dto.Relationship;
-                existing.Hobby = dto.Hobby;
-                existing.Fetish = dto.Fetish;
-                existing.PublicDescription = dto.PublicDescription;
-                existing.Greeting = dto.Greeting;
-                existing.FirstReplySuggestion = dto.FirstReplySuggestion;
-                existing.Scenario = dto.Scenario;
-                existing.AdditionalPersonalityDetails = dto.AdditionalPersonalityDetails;
-                existing.ExtraDetails = dto.ExtraDetails;
+                existing.HairStyle = ToLf(dto.HairStyle);
+                existing.BodyType = ToLf(dto.BodyType);
+                existing.SkinTone = ToLf(dto.SkinTone);
+                existing.BreastSize = ToLf(dto.BreastSize);
+                existing.Ethnicity = ToLf(dto.Ethnicity);
+                existing.ButtSize = ToLf(dto.ButtSize);
+                existing.EyeColor = ToLf(dto.EyeColor);
+                existing.HairColor = ToLf(dto.HairColor);
+                existing.CustomPhysicalDetails = ToLf(dto.CustomPhysicalDetails);
+                existing.CustomFaceDetails = ToLf(dto.CustomFaceDetails);
+                existing.Occupation = ToLf(dto.Occupation);
+                existing.Relationship = ToLf(dto.Relationship);
+                existing.Hobby = ToLf(dto.Hobby);
+                existing.Fetish = ToLf(dto.Fetish);
+                existing.PublicDescription = ToLf(dto.PublicDescription);
+                existing.Greeting = ToLf(dto.Greeting);
+                existing.FirstReplySuggestion = ToLf(dto.FirstReplySuggestion);
+                existing.Scenario = ToLf(dto.Scenario);
+                existing.AdditionalPersonalityDetails = ToLf(dto.AdditionalPersonalityDetails);
+                existing.ExtraDetails = ToLf(dto.ExtraDetails);
                 existing.ImagePath = dto.ImagePath;
                 existing.AnimeImagePath = dto.AnimeImagePath;
 

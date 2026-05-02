@@ -526,34 +526,34 @@ namespace CharacterLibrary.Forms
             _isRealisticCheck.Checked = c.IsRealistic;
             _isAnimeCheck.Checked = c.IsAnime;
             _ageNum.Value = c.Age < 0 ? 0 : c.Age;
-            _firstReplyBox.Text = c.FirstReplySuggestion ?? "";
+            _firstReplyBox.Text = Normalize(c.FirstReplySuggestion);
 
             _imagePathBox.Text = c.ImagePath ?? "";
             LoadImagePreview(c.ImagePath, _imagePreview);
             _animeImagePathBox.Text = c.AnimeImagePath ?? "";
             LoadImagePreview(c.AnimeImagePath, _animeImagePreview);
 
-            _hairStyle.Text  = c.HairStyle ?? "";
-            _bodyType.Text   = c.BodyType ?? "";
-            _skinTone.Text   = c.SkinTone ?? "";
-            _breastSize.Text = c.BreastSize ?? "";
-            _ethnicity.Text  = c.Ethnicity ?? "";
-            _buttSize.Text   = c.ButtSize ?? "";
-            _eyeColor.Text   = c.EyeColor ?? "";
-            _hairColor.Text  = c.HairColor ?? "";
-            _customPhysical.Text = c.CustomPhysicalDetails ?? "";
-            _customFace.Text     = c.CustomFaceDetails ?? "";
+            _hairStyle.Text = Normalize(c.HairStyle);
+            _bodyType.Text = Normalize(c.BodyType);
+            _skinTone.Text = Normalize(c.SkinTone);
+            _breastSize.Text = Normalize(c.BreastSize);
+            _ethnicity.Text = Normalize(c.Ethnicity);
+            _buttSize.Text = Normalize(c.ButtSize);
+            _eyeColor.Text = Normalize(c.EyeColor);
+            _hairColor.Text = Normalize(c.HairColor);
+            _customPhysical.Text = Normalize(c.CustomPhysicalDetails);
+            _customFace.Text = Normalize(c.CustomFaceDetails);
 
-            _occupation.Text   = c.Occupation ?? "";
-            _relationship.Text = c.Relationship ?? "";
-            _hobby.Text        = c.Hobby ?? "";
-            _fetish.Text       = c.Fetish ?? "";
-            _publicDesc.Text   = c.PublicDescription ?? "";
-            _greeting.Text     = c.Greeting ?? "";
+            _occupation.Text = Normalize(c.Occupation);
+            _relationship.Text = Normalize(c.Relationship);
+            _hobby.Text = Normalize(c.Hobby);
+            _fetish.Text = Normalize(c.Fetish);
+            _publicDesc.Text = Normalize(c.PublicDescription);
+            _greeting.Text = Normalize(c.Greeting);
 
-            _scenarioBox.Text   = c.Scenario ?? "";
-            _additionalBox.Text = c.AdditionalPersonalityDetails ?? "";
-            _extraBox.Text      = c.ExtraDetails ?? "";
+            _scenarioBox.Text = Normalize(c.Scenario);
+            _additionalBox.Text = Normalize(c.AdditionalPersonalityDetails);
+            _extraBox.Text = Normalize(c.ExtraDetails);
 
             var mine = (c.CharacterTags ?? new List<CharacterTag>())
                 .Select(ct => ct.TagId)
@@ -616,30 +616,30 @@ namespace CharacterLibrary.Forms
             entity.IsRealistic = _isRealisticCheck.Checked;
             entity.IsAnime = _isAnimeCheck.Checked;
             entity.Age = (long)_ageNum.Value;
-            entity.FirstReplySuggestion = NullIfEmpty(_firstReplyBox.Text);
+            entity.FirstReplySuggestion = DenormalizeForStorage(_firstReplyBox.Text);
             entity.ImagePath = NullIfEmpty(_imagePathBox.Text);
             entity.AnimeImagePath = NullIfEmpty(_animeImagePathBox.Text);
 
-            entity.HairStyle  = NullIfEmpty(_hairStyle.Text);
-            entity.BodyType   = NullIfEmpty(_bodyType.Text);
-            entity.SkinTone   = NullIfEmpty(_skinTone.Text);
-            entity.BreastSize = NullIfEmpty(_breastSize.Text);
-            entity.Ethnicity  = NullIfEmpty(_ethnicity.Text);
-            entity.ButtSize   = NullIfEmpty(_buttSize.Text);
-            entity.EyeColor   = NullIfEmpty(_eyeColor.Text);
-            entity.HairColor  = NullIfEmpty(_hairColor.Text);
-            entity.CustomPhysicalDetails = NullIfEmpty(_customPhysical.Text);
-            entity.CustomFaceDetails     = NullIfEmpty(_customFace.Text);
+            entity.HairStyle = DenormalizeForStorage(_hairStyle.Text);
+            entity.BodyType = DenormalizeForStorage(_bodyType.Text);
+            entity.SkinTone = DenormalizeForStorage(_skinTone.Text);
+            entity.BreastSize = DenormalizeForStorage(_breastSize.Text);
+            entity.Ethnicity = DenormalizeForStorage(_ethnicity.Text);
+            entity.ButtSize = DenormalizeForStorage(_buttSize.Text);
+            entity.EyeColor = DenormalizeForStorage(_eyeColor.Text);
+            entity.HairColor = DenormalizeForStorage(_hairColor.Text);
+            entity.CustomPhysicalDetails = DenormalizeForStorage(_customPhysical.Text);
+            entity.CustomFaceDetails = DenormalizeForStorage(_customFace.Text);
 
-            entity.Occupation   = NullIfEmpty(_occupation.Text);
-            entity.Relationship = NullIfEmpty(_relationship.Text);
-            entity.Hobby        = NullIfEmpty(_hobby.Text);
-            entity.Fetish       = NullIfEmpty(_fetish.Text);
-            entity.PublicDescription = NullIfEmpty(_publicDesc.Text);
-            entity.Greeting          = NullIfEmpty(_greeting.Text);
-            entity.Scenario                     = NullIfEmpty(_scenarioBox.Text);
-            entity.AdditionalPersonalityDetails = NullIfEmpty(_additionalBox.Text);
-            entity.ExtraDetails                 = NullIfEmpty(_extraBox.Text);
+            entity.Occupation = DenormalizeForStorage(_occupation.Text);
+            entity.Relationship = DenormalizeForStorage(_relationship.Text);
+            entity.Hobby = DenormalizeForStorage(_hobby.Text);
+            entity.Fetish = DenormalizeForStorage(_fetish.Text);
+            entity.PublicDescription = DenormalizeForStorage(_publicDesc.Text);
+            entity.Greeting = DenormalizeForStorage(_greeting.Text);
+            entity.Scenario = DenormalizeForStorage(_scenarioBox.Text);
+            entity.AdditionalPersonalityDetails = DenormalizeForStorage(_additionalBox.Text);
+            entity.ExtraDetails = DenormalizeForStorage(_extraBox.Text);
 
             db.SaveChanges();
 
@@ -662,6 +662,20 @@ namespace CharacterLibrary.Forms
             DialogResult = DialogResult.OK;
             Close();
         }
+
+        /// <summary>
+        /// Normalize stored line endings (LF) to CRLF for display in WinForms text controls.
+        /// Handles LF, CR, and existing CRLF without doubling.
+        /// </summary>
+        private static string Normalize(string? s) =>
+            s == null ? "" : s.Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", "\r\n");
+
+        /// <summary>
+        /// Convert CRLF (from WinForms text controls) back to LF for storage.
+        /// Keeps the DB canonical with what the target website expects.
+        /// </summary>
+        private static string? DenormalizeForStorage(string? s) =>
+            string.IsNullOrEmpty(s) ? null : s.Replace("\r\n", "\n");
 
         private static string? NullIfEmpty(string? s) =>
             string.IsNullOrWhiteSpace(s) ? null : s;
