@@ -48,7 +48,7 @@ namespace CharacterLibrary.Forms
         // Long fields
         private readonly TextBox _scenarioBox;
         private readonly TextBox _additionalBox;
-        private readonly TextBox _extraBox;
+        private readonly RichTextBox _extraBox;
 
         public CharacterEditForm(int? editingId = null)
         {
@@ -311,10 +311,10 @@ namespace CharacterLibrary.Forms
             additionalTab.Padding = new Padding(10);
             tabs.TabPages.Add(additionalTab);
 
-            // ---- Extra Details (50k) ----
-            _extraBox = MakeTb(50000, multiline: true);
+            // ---- Extra Details (100k) ----
+            _extraBox = MakeRtb(100000);
             _extraBox.Dock = DockStyle.Fill;
-            var extraTab = new TabPage("Extra Details (50,000)");
+            var extraTab = new TabPage("Extra Details (100,000)");
             extraTab.Controls.Add(_extraBox);
             extraTab.Padding = new Padding(10);
             tabs.TabPages.Add(extraTab);
@@ -361,6 +361,18 @@ namespace CharacterLibrary.Forms
                 WordWrap = multiline
             };
             return tb;
+        }
+
+        private static RichTextBox MakeRtb(int maxLen)
+        {
+            var rtb = new RichTextBox
+            {
+                Dock = DockStyle.Fill,
+                MaxLength = maxLen,
+                ScrollBars = RichTextBoxScrollBars.Vertical,
+                WordWrap = true
+            };
+            return rtb;
         }
 
         private static void AddRow(TableLayoutPanel panel, string label, Control control, int rowHeight = 26)

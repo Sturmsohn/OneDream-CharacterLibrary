@@ -49,7 +49,7 @@ namespace CharacterLibrary.Models
         [MaxLength(100)]   public string? FirstReplySuggestion { get; set; }
         [MaxLength(50000)] public string? Scenario { get; set; }
         [MaxLength(50000)] public string? AdditionalPersonalityDetails { get; set; }
-        [MaxLength(50000)] public string? ExtraDetails { get; set; }
+        [MaxLength(100000)] public string? ExtraDetails { get; set; }
 
         // --- Media ---
         // Relative paths (e.g. "Images/abc123.png") into the app's Images folder.

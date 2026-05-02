@@ -93,7 +93,7 @@ namespace CharacterLibrary.Forms
                     t.Id,
                     t.Name,
                     t.CreatedAt,
-                    Count = t.CharacterTags.Count()
+                    Count = t.CharacterTags.Count
                 })
                 .ToList();
 
