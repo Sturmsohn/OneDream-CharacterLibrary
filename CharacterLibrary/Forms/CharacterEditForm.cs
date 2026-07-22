@@ -107,7 +107,15 @@ namespace CharacterLibrary.Forms
             _browseImageBtn = new Button { Text = "Browse…", AutoSize = true };
             _browseImageBtn.Click += (s, e) => PickImage(false);
             _clearImageBtn = new Button { Text = "Clear", AutoSize = true };
-            _clearImageBtn.Click += (s, e) => { _imagePathBox.Text = ""; _imagePreview.Image?.Dispose(); _imagePreview.Image = null; };
+            _clearImageBtn.Click += (s, e) =>
+            {
+                _imagePathBox.Text = "";
+                if (_imagePreview != null)
+                {
+                    _imagePreview.Image?.Dispose();
+                    _imagePreview.Image = null;
+                }
+            };
             realImageRow.Controls.Add(_imagePathBox, 0, 0);
             realImageRow.Controls.Add(_browseImageBtn, 1, 0);
             realImageRow.Controls.Add(_clearImageBtn, 2, 0);
@@ -129,7 +137,15 @@ namespace CharacterLibrary.Forms
             _browseAnimeImageBtn = new Button { Text = "Browse…", AutoSize = true };
             _browseAnimeImageBtn.Click += (s, e) => PickImage(true);
             _clearAnimeImageBtn = new Button { Text = "Clear", AutoSize = true };
-            _clearAnimeImageBtn.Click += (s, e) => { _animeImagePathBox.Text = ""; _animeImagePreview.Image?.Dispose(); _animeImagePreview.Image = null; };
+            _clearAnimeImageBtn.Click += (s, e) =>
+            {
+                _animeImagePathBox.Text = "";
+                if (_animeImagePreview != null)
+                {
+                    _animeImagePreview.Image?.Dispose();
+                    _animeImagePreview.Image = null;
+                }
+            };
             animeImageRow.Controls.Add(_animeImagePathBox, 0, 0);
             animeImageRow.Controls.Add(_browseAnimeImageBtn, 1, 0);
             animeImageRow.Controls.Add(_clearAnimeImageBtn, 2, 0);
