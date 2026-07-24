@@ -1,85 +1,29 @@
+using System.ComponentModel;
 using CharacterLibrary.Data;
 using CharacterLibrary.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CharacterLibrary.Forms
 {
-    public class TagManagerForm : Form
+    public partial class TagManagerForm : Form
     {
-        private readonly ListView _list;
-        private readonly TextBox _newTagBox;
-        private readonly Button _addBtn;
-        private readonly Button _renameBtn;
-        private readonly Button _deleteBtn;
-        private readonly Button _closeBtn;
-
         public TagManagerForm()
         {
-            Text = "Manage Tags";
-            Width = 500;
-            Height = 500;
-            StartPosition = FormStartPosition.CenterParent;
-            MinimumSize = new Size(400, 300);
+            InitializeComponent();
 
-            _list = new ListView
-            {
-                Dock = DockStyle.Fill,
-                View = View.Details,
-                FullRowSelect = true,
-                MultiSelect = false,
-                GridLines = true
-            };
-            _list.Columns.Add("Tag", 250);
-            _list.Columns.Add("Used by", 80);
-            _list.Columns.Add("Created (UTC)", 140);
-
-            var addPanel = new TableLayoutPanel
-            {
-                Dock = DockStyle.Top,
-                Height = 40,
-                ColumnCount = 2,
-                Padding = new Padding(6)
-            };
-            addPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            addPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-
-            _newTagBox = new TextBox
-            {
-                Dock = DockStyle.Fill,
-                MaxLength = 25,
-                PlaceholderText = "New tag name (max 25 chars)…"
-            };
-            _newTagBox.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; AddTag(); } };
-
-            _addBtn = new Button { Text = "Add", AutoSize = true };
-            _addBtn.Click += (s, e) => AddTag();
-
-            addPanel.Controls.Add(_newTagBox, 0, 0);
-            addPanel.Controls.Add(_addBtn, 1, 0);
-
-            var bottomPanel = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Bottom,
-                Height = 44,
-                FlowDirection = FlowDirection.RightToLeft,
-                Padding = new Padding(6)
-            };
-            _closeBtn = new Button { Text = "Close", AutoSize = true };
-            _closeBtn.Click += (s, e) => Close();
-            _deleteBtn = new Button { Text = "Delete", AutoSize = true };
-            _deleteBtn.Click += (s, e) => DeleteSelected();
-            _renameBtn = new Button { Text = "Rename", AutoSize = true };
-            _renameBtn.Click += (s, e) => RenameSelected();
-            bottomPanel.Controls.Add(_closeBtn);
-            bottomPanel.Controls.Add(_deleteBtn);
-            bottomPanel.Controls.Add(_renameBtn);
-
-            Controls.Add(_list);
-            Controls.Add(addPanel);
-            Controls.Add(bottomPanel);
-
-            LoadTags();
+            if (LicenseManager.UsageMode != LicenseUsageMode.Designtime)
+                LoadTags();
         }
+
+        private void NewTagBox_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; AddTag(); }
+        }
+
+        private void AddBtn_Click(object? sender, EventArgs e) => AddTag();
+        private void CloseBtn_Click(object? sender, EventArgs e) => Close();
+        private void DeleteBtn_Click(object? sender, EventArgs e) => DeleteSelected();
+        private void RenameBtn_Click(object? sender, EventArgs e) => RenameSelected();
 
         private void LoadTags()
         {

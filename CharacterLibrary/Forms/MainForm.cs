@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using CharacterLibrary.Data;
 using CharacterLibrary.Models;
 using CharacterLibrary.Services;
@@ -5,15 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CharacterLibrary.Forms
 {
-    public class MainForm : Form
+    public partial class MainForm : Form
     {
-        private readonly DataGridView _grid;
-        private readonly TextBox _searchBox;
-        private readonly ComboBox _typeFilter;
-        private readonly ComboBox _tagFilter;
-        private readonly StatusStrip _statusStrip;
-        private readonly ToolStripStatusLabel _statusLabel;
-
         // Filter values stored as strings for clarity
         private const string FilterAll = "All types";
         private const string FilterRealistic = "Realistic";
@@ -21,152 +15,49 @@ namespace CharacterLibrary.Forms
 
         public MainForm()
         {
-            Text = "Character Library";
-            Width = 1150;
-            Height = 700;
-            StartPosition = FormStartPosition.CenterScreen;
-            MinimumSize = new Size(900, 500);
+            InitializeComponent();
 
-            // ---- Top filter bar ----
-            var topPanel = new TableLayoutPanel
-            {
-                Dock = DockStyle.Top,
-                Height = 44,
-                ColumnCount = 5,
-                Padding = new Padding(6)
-            };
-            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-
-            var searchLabel = new Label { Text = "Search:", AutoSize = true, Margin = new Padding(3, 9, 6, 0) };
-
-            _searchBox = new TextBox
-            {
-                Dock = DockStyle.Fill,
-                PlaceholderText = "Name or description…"
-            };
-            _searchBox.TextChanged += (s, e) => RefreshList();
-
-            _typeFilter = new ComboBox { Width = 130, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(6, 3, 0, 0) };
             _typeFilter.Items.Add(FilterAll);
             _typeFilter.Items.Add(FilterRealistic);
             _typeFilter.Items.Add(FilterAnime);
             _typeFilter.SelectedIndex = 0;
-            _typeFilter.SelectedIndexChanged += (s, e) => RefreshList();
 
-            _tagFilter = new ComboBox { Width = 180, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(6, 3, 0, 0) };
-            _tagFilter.SelectedIndexChanged += (s, e) => RefreshList();
+            if (LicenseManager.UsageMode != LicenseUsageMode.Designtime)
+            {
+                LoadTagFilter();
+                RefreshList();
+            }
+        }
 
-            var refreshBtn = new Button { Text = "Refresh", AutoSize = true, Margin = new Padding(6, 1, 0, 0) };
-            refreshBtn.Click += (s, e) => { LoadTagFilter(); RefreshList(); };
+        private void SearchBox_TextChanged(object? sender, EventArgs e) => RefreshList();
+        private void TypeFilter_SelectedIndexChanged(object? sender, EventArgs e) => RefreshList();
+        private void TagFilter_SelectedIndexChanged(object? sender, EventArgs e) => RefreshList();
 
-            topPanel.Controls.Add(searchLabel, 0, 0);
-            topPanel.Controls.Add(_searchBox, 1, 0);
-            topPanel.Controls.Add(_typeFilter, 2, 0);
-            topPanel.Controls.Add(_tagFilter, 3, 0);
-            topPanel.Controls.Add(refreshBtn, 4, 0);
-
-            // ---- Main grid ----
-            _grid = new DataGridView
-            {
-                Dock = DockStyle.Fill,
-                ReadOnly = true,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                MultiSelect = false,
-                AutoGenerateColumns = false,
-                RowHeadersVisible = false,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                BackgroundColor = SystemColors.Window
-            };
-            _grid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                DataPropertyName = nameof(CharacterRow.Id),
-                HeaderText = "ID",
-                Width = 50,
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
-                FillWeight = 5
-            });
-            _grid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                DataPropertyName = nameof(CharacterRow.Name),
-                HeaderText = "Name",
-                FillWeight = 25
-            });
-            _grid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                DataPropertyName = nameof(CharacterRow.TypeText),
-                HeaderText = "Type",
-                FillWeight = 12
-            });
-            _grid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                DataPropertyName = nameof(CharacterRow.AgeText),
-                HeaderText = "Age",
-                FillWeight = 10
-            });
-            _grid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                DataPropertyName = nameof(CharacterRow.TagsText),
-                HeaderText = "Tags",
-                FillWeight = 33
-            });
-            _grid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                DataPropertyName = nameof(CharacterRow.ModifiedText),
-                HeaderText = "Modified",
-                FillWeight = 15
-            });
-            _grid.CellDoubleClick += (s, e) => { if (e.RowIndex >= 0) EditSelected(); };
-            _grid.KeyDown += (s, e) =>
-            {
-                if (e.KeyCode == Keys.Delete) DeleteSelected();
-                else if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; EditSelected(); }
-            };
-
-            // ---- Bottom action bar ----
-            var bottomPanel = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Bottom,
-                Height = 46,
-                FlowDirection = FlowDirection.LeftToRight,
-                Padding = new Padding(6)
-            };
-            bottomPanel.Controls.Add(MakeBtn("Add New…", (s, e) => AddNew()));
-            bottomPanel.Controls.Add(MakeBtn("Edit…", (s, e) => EditSelected()));
-            bottomPanel.Controls.Add(MakeBtn("Duplicate", (s, e) => DuplicateSelected()));
-            bottomPanel.Controls.Add(MakeBtn("Delete", (s, e) => DeleteSelected()));
-            bottomPanel.Controls.Add(new Label { Width = 20 }); // spacer
-            bottomPanel.Controls.Add(MakeBtn("Manage Tags…", (s, e) => OpenTagManager()));
-            bottomPanel.Controls.Add(new Label { Width = 20 }); // spacer
-            bottomPanel.Controls.Add(MakeBtn("Export All (JSON)…", (s, e) => ExportAll()));
-            bottomPanel.Controls.Add(MakeBtn("Export Selected (JSON)…", (s, e) => ExportSelected()));
-            bottomPanel.Controls.Add(MakeBtn("Import JSON…", (s, e) => ImportJson()));
-
-            // ---- Status strip ----
-            _statusStrip = new StatusStrip();
-            _statusLabel = new ToolStripStatusLabel();
-            _statusStrip.Items.Add(_statusLabel);
-
-            Controls.Add(_grid);
-            Controls.Add(bottomPanel);
-            Controls.Add(topPanel);
-            Controls.Add(_statusStrip);
-
+        private void RefreshBtn_Click(object? sender, EventArgs e)
+        {
             LoadTagFilter();
             RefreshList();
         }
 
-        private static Button MakeBtn(string text, EventHandler onClick)
+        private void Grid_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
         {
-            var b = new Button { Text = text, AutoSize = true, Padding = new Padding(6, 2, 6, 2) };
-            b.Click += onClick;
-            return b;
+            if (e.RowIndex >= 0) EditSelected();
         }
+
+        private void Grid_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete) DeleteSelected();
+            else if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; EditSelected(); }
+        }
+
+        private void AddNewBtn_Click(object? sender, EventArgs e) => AddNew();
+        private void EditBtn_Click(object? sender, EventArgs e) => EditSelected();
+        private void DuplicateBtn_Click(object? sender, EventArgs e) => DuplicateSelected();
+        private void DeleteBtn_Click(object? sender, EventArgs e) => DeleteSelected();
+        private void ManageTagsBtn_Click(object? sender, EventArgs e) => OpenTagManager();
+        private void ExportAllBtn_Click(object? sender, EventArgs e) => ExportAll();
+        private void ExportSelectedBtn_Click(object? sender, EventArgs e) => ExportSelected();
+        private void ImportBtn_Click(object? sender, EventArgs e) => ImportJson();
 
         // ---------- Data loading ----------
 

@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Runtime.InteropServices;
 using CharacterLibrary.Data;
 using CharacterLibrary.Models;
 using CharacterLibrary.Services;
@@ -6,408 +8,85 @@ using Microsoft.EntityFrameworkCore;
 namespace CharacterLibrary.Forms
 {
     /// <summary>
-    /// Form for creating or editing a single Character. Lay out with TabControl
+    /// Form for creating or editing a single Character. Laid out with TabControl
     /// to keep the 20+ fields organized and give the three 50k-character fields
     /// each their own full-size tab.
     /// </summary>
-    public class CharacterEditForm : Form
+    public partial class CharacterEditForm : Form
     {
         private readonly int? _editingId;
-
-        // Basic tab
-        private readonly TextBox _nameBox;
-        private readonly CheckBox _isRealisticCheck;
-        private readonly CheckBox _isAnimeCheck;
-        private readonly NumericUpDown _ageNum;
-        private readonly TextBox _firstReplyBox;
-
-        // Realistic image
-        private readonly TextBox _imagePathBox;
-        private readonly Button _browseImageBtn;
-        private readonly Button _clearImageBtn;
-        private readonly PictureBox _imagePreview;
-
-        // Anime image
-        private readonly TextBox _animeImagePathBox;
-        private readonly Button _browseAnimeImageBtn;
-        private readonly Button _clearAnimeImageBtn;
-        private readonly PictureBox _animeImagePreview;
-
-        private readonly CheckedListBox _tagList;
-        private readonly TextBox _newTagBox;
-        private readonly Button _addTagBtn;
-        private readonly Label _tagCountLabel;
-
-        // Appearance
-        private readonly TextBox _hairStyle, _bodyType, _skinTone, _breastSize, _ethnicity, _buttSize, _eyeColor, _hairColor;
-        private readonly TextBox _customPhysical, _customFace;
-
-        // Personality short
-        private readonly TextBox _occupation, _relationship, _hobby, _fetish, _publicDesc, _greeting;
-
-        // Long fields
-        private readonly TextBox _scenarioBox;
-        private readonly TextBox _additionalBox;
-        private readonly RichTextBox _extraBox;
 
         public CharacterEditForm(int? editingId = null)
         {
             _editingId = editingId;
+            InitializeComponent();
             Text = editingId.HasValue ? "Edit Character" : "New Character";
-            Width = 1000;
-            Height = 780;
-            StartPosition = FormStartPosition.CenterParent;
-            MinimumSize = new Size(850, 600);
 
-            var tabs = new TabControl { Dock = DockStyle.Fill };
-
-            // ---- Basic tab ----
-            var basicTab = new TabPage("Basic");
-            var basicLayout = new TableLayoutPanel
+            if (LicenseManager.UsageMode != LicenseUsageMode.Designtime)
             {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                Padding = new Padding(10),
-                AutoScroll = true
-            };
-            basicLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
-            basicLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-
-            _nameBox = new TextBox { Dock = DockStyle.Fill, MaxLength = 100 };
-
-            // Type checkboxes in a flow panel
-            var typePanel = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = true
-            };
-            _isRealisticCheck = new CheckBox { Text = "Realistic", AutoSize = true, Margin = new Padding(0, 3, 16, 0) };
-            _isAnimeCheck = new CheckBox { Text = "Anime", AutoSize = true, Margin = new Padding(0, 3, 0, 0) };
-            typePanel.Controls.Add(_isRealisticCheck);
-            typePanel.Controls.Add(_isAnimeCheck);
-
-            _ageNum = new NumericUpDown
-            {
-                Dock = DockStyle.Fill,
-                Minimum = 0,
-                Maximum = long.MaxValue,
-                ThousandsSeparator = true
-            };
-
-            _firstReplyBox = new TextBox { Dock = DockStyle.Fill, MaxLength = 100 };
-
-            // --- Realistic image row ---
-            var realImageRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, Height = 28, Margin = new Padding(0) };
-            realImageRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            realImageRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            realImageRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            _imagePathBox = new TextBox { Dock = DockStyle.Fill, ReadOnly = true };
-            _browseImageBtn = new Button { Text = "Browse…", AutoSize = true };
-            _browseImageBtn.Click += (s, e) => PickImage(false);
-            _clearImageBtn = new Button { Text = "Clear", AutoSize = true };
-            _clearImageBtn.Click += (s, e) =>
-            {
-                _imagePathBox.Text = "";
-                if (_imagePreview != null)
-                {
-                    _imagePreview.Image?.Dispose();
-                    _imagePreview.Image = null;
-                }
-            };
-            realImageRow.Controls.Add(_imagePathBox, 0, 0);
-            realImageRow.Controls.Add(_browseImageBtn, 1, 0);
-            realImageRow.Controls.Add(_clearImageBtn, 2, 0);
-
-            _imagePreview = new PictureBox
-            {
-                SizeMode = PictureBoxSizeMode.Zoom,
-                Dock = DockStyle.Fill,
-                Height = 220,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-
-            // --- Anime image row ---
-            var animeImageRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, Height = 28, Margin = new Padding(0) };
-            animeImageRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            animeImageRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            animeImageRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            _animeImagePathBox = new TextBox { Dock = DockStyle.Fill, ReadOnly = true };
-            _browseAnimeImageBtn = new Button { Text = "Browse…", AutoSize = true };
-            _browseAnimeImageBtn.Click += (s, e) => PickImage(true);
-            _clearAnimeImageBtn = new Button { Text = "Clear", AutoSize = true };
-            _clearAnimeImageBtn.Click += (s, e) =>
-            {
-                _animeImagePathBox.Text = "";
-                if (_animeImagePreview != null)
-                {
-                    _animeImagePreview.Image?.Dispose();
-                    _animeImagePreview.Image = null;
-                }
-            };
-            animeImageRow.Controls.Add(_animeImagePathBox, 0, 0);
-            animeImageRow.Controls.Add(_browseAnimeImageBtn, 1, 0);
-            animeImageRow.Controls.Add(_clearAnimeImageBtn, 2, 0);
-
-            _animeImagePreview = new PictureBox
-            {
-                SizeMode = PictureBoxSizeMode.Zoom,
-                Dock = DockStyle.Fill,
-                Height = 220,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-
-            // --- Side-by-side image container (2 columns, 2 rows) ---
-            // Row 0: path+browse+clear for each
-            // Row 1: preview for each
-            var imageContainer = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                RowCount = 2,
-                Margin = new Padding(0)
-            };
-            imageContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            imageContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            imageContainer.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
-            imageContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-
-            // Sub-headers inside the container
-            var realHeader = new Label { Text = "Realistic:", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font(SystemFonts.DefaultFont, FontStyle.Bold) };
-            var animeHeader = new Label { Text = "Anime:", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font(SystemFonts.DefaultFont, FontStyle.Bold), Margin = new Padding(6, 0, 0, 0) };
-
-            // Wrap each image row with its header in a small panel
-            var realTop = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = new Padding(0) };
-            realTop.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
-            realTop.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            realTop.Controls.Add(realHeader, 0, 0);
-            realTop.Controls.Add(realImageRow, 1, 0);
-
-            var animeTop = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = new Padding(0) };
-            animeTop.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 55));
-            animeTop.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            animeTop.Controls.Add(animeHeader, 0, 0);
-            animeTop.Controls.Add(animeImageRow, 1, 0);
-
-            imageContainer.Controls.Add(realTop, 0, 0);
-            imageContainer.Controls.Add(animeTop, 1, 0);
-            imageContainer.Controls.Add(_imagePreview, 0, 1);
-            imageContainer.Controls.Add(_animeImagePreview, 1, 1);
-
-            AddRow(basicLayout, "Name *", _nameBox);
-            AddRow(basicLayout, "Type", typePanel);
-            AddRow(basicLayout, "Age", _ageNum);
-            AddRow(basicLayout, "First Reply Suggestion", _firstReplyBox);
-            AddRow(basicLayout, "Images", imageContainer, rowHeight: 258);
-
-            // Tags area
-            _tagList = new CheckedListBox
-            {
-                Dock = DockStyle.Fill,
-                CheckOnClick = true,
-                IntegralHeight = false
-            };
-            _tagCountLabel = new Label { AutoSize = true, Margin = new Padding(6, 6, 0, 0) };
-            _tagList.ItemCheck += (s, e) =>
-            {
-                int n = 0;
-                for (int i = 0; i < _tagList.Items.Count; i++)
-                {
-                    bool willBeChecked = (i == e.Index)
-                        ? (e.NewValue == CheckState.Checked)
-                        : _tagList.GetItemChecked(i);
-                    if (willBeChecked) n++;
-                }
-                _tagCountLabel.Text = $"{n} / 20 selected";
-                _tagCountLabel.ForeColor = n > 20 ? Color.Red : SystemColors.ControlText;
-            };
-
-            _newTagBox = new TextBox { Dock = DockStyle.Fill, MaxLength = 25, PlaceholderText = "New tag…" };
-            _newTagBox.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; AddInlineTag(); } };
-            _addTagBtn = new Button { Text = "Add Tag", AutoSize = true };
-            _addTagBtn.Click += (s, e) => AddInlineTag();
-
-            var tagBottom = new TableLayoutPanel { Dock = DockStyle.Bottom, Height = 32, ColumnCount = 3 };
-            tagBottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            tagBottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            tagBottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            tagBottom.Controls.Add(_newTagBox, 0, 0);
-            tagBottom.Controls.Add(_addTagBtn, 1, 0);
-            tagBottom.Controls.Add(_tagCountLabel, 2, 0);
-
-            var tagPanel = new Panel { Dock = DockStyle.Fill, Height = 200 };
-            tagPanel.Controls.Add(_tagList);
-            tagPanel.Controls.Add(tagBottom);
-
-            AddRow(basicLayout, "Tags (max 20)", tagPanel, rowHeight: 200);
-
-            basicTab.Controls.Add(basicLayout);
-            tabs.TabPages.Add(basicTab);
-
-            // ---- Appearance tab ----
-            var appearanceTab = new TabPage("Appearance");
-            var appLayout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                Padding = new Padding(10),
-                AutoScroll = true
-            };
-            appLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
-            appLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-
-            _hairStyle  = MakeTb(250);
-            _bodyType   = MakeTb(25);
-            _skinTone   = MakeTb(25);
-            _breastSize = MakeTb(25);
-            _ethnicity  = MakeTb(50);
-            _buttSize   = MakeTb(50);
-            _eyeColor   = MakeTb(100);
-            _hairColor  = MakeTb(100);
-            _customPhysical = MakeTb(2000, multiline: true);
-            _customFace     = MakeTb(2000, multiline: true);
-
-            AddRow(appLayout, "Hair Style (250)", _hairStyle);
-            AddRow(appLayout, "Body Type (25)", _bodyType);
-            AddRow(appLayout, "Ethnicity (50)", _ethnicity);
-            AddRow(appLayout, "Breast Size (25)", _breastSize);
-            AddRow(appLayout, "Butt Size (50)", _buttSize);
-            AddRow(appLayout, "Eye Color (100)", _eyeColor);
-            AddRow(appLayout, "Hair Color (100)", _hairColor);
-            AddRow(appLayout, "Skin Tone (25)", _skinTone);
-            AddRow(appLayout, "Custom Physical Details (2000)", _customPhysical, rowHeight: 100);
-            AddRow(appLayout, "Custom Face Details (2000)", _customFace, rowHeight: 100);
-
-            appearanceTab.Controls.Add(appLayout);
-            tabs.TabPages.Add(appearanceTab);
-
-            // ---- Personality tab ----
-            var personalityTab = new TabPage("Personality");
-            var persLayout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                Padding = new Padding(10),
-                AutoScroll = true
-            };
-            persLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
-            persLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-
-            _occupation   = MakeTb(4000, multiline: true);
-            _relationship = MakeTb(4000, multiline: true);
-            _hobby        = MakeTb(4000, multiline: true);
-            _fetish       = MakeTb(4000, multiline: true);
-            _publicDesc   = MakeTb(10000, multiline: true);
-            _greeting     = MakeTb(10000, multiline: true);
-
-            AddRow(persLayout, "Occupation (4000)", _occupation, rowHeight: 80);
-            AddRow(persLayout, "Relationship (4000)", _relationship, rowHeight: 80);
-            AddRow(persLayout, "Hobby (4000)", _hobby, rowHeight: 80);
-            AddRow(persLayout, "Fetish (4000)", _fetish, rowHeight: 80);
-            AddRow(persLayout, "Public Description (10000)", _publicDesc, rowHeight: 120);
-            AddRow(persLayout, "Greeting (10000)", _greeting, rowHeight: 120);
-
-            personalityTab.Controls.Add(persLayout);
-            tabs.TabPages.Add(personalityTab);
-
-            // ---- Scenario (50k) ----
-            _scenarioBox = MakeTb(50000, multiline: true);
-            _scenarioBox.Dock = DockStyle.Fill;
-            var scenarioTab = new TabPage("Scenario (50,000)");
-            scenarioTab.Controls.Add(_scenarioBox);
-            scenarioTab.Padding = new Padding(10);
-            tabs.TabPages.Add(scenarioTab);
-
-            // ---- Additional Personality Details (50k) ----
-            _additionalBox = MakeTb(50000, multiline: true);
-            _additionalBox.Dock = DockStyle.Fill;
-            var additionalTab = new TabPage("Additional Personality (50,000)");
-            additionalTab.Controls.Add(_additionalBox);
-            additionalTab.Padding = new Padding(10);
-            tabs.TabPages.Add(additionalTab);
-
-            // ---- Extra Details (100k) ----
-            _extraBox = MakeRtb(100000);
-            _extraBox.Dock = DockStyle.Fill;
-            var extraTab = new TabPage("Extra Details (100,000)");
-            extraTab.Controls.Add(_extraBox);
-            extraTab.Padding = new Padding(10);
-            tabs.TabPages.Add(extraTab);
-
-            // ---- Save / Cancel buttons ----
-            var buttonPanel = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Bottom,
-                Height = 46,
-                FlowDirection = FlowDirection.RightToLeft,
-                Padding = new Padding(10)
-            };
-            var cancelBtn = new Button { Text = "Cancel", AutoSize = true, DialogResult = DialogResult.Cancel };
-            cancelBtn.Click += (s, e) => Close();
-            var saveBtn = new Button { Text = "Save", AutoSize = true };
-            saveBtn.Click += (s, e) => SaveAndClose();
-            buttonPanel.Controls.Add(cancelBtn);
-            buttonPanel.Controls.Add(saveBtn);
-            AcceptButton = saveBtn;
-            CancelButton = cancelBtn;
-
-            Controls.Add(tabs);
-            Controls.Add(buttonPanel);
-
-            LoadTagsIntoList();
-
-            if (_editingId.HasValue)
-                LoadExisting(_editingId.Value);
-
-            UpdateTagCount();
+                LoadTagsIntoList();
+                if (_editingId.HasValue)
+                    LoadExisting(_editingId.Value);
+                UpdateTagCount();
+            }
         }
 
-        // ---------- UI helpers ----------
+        // ---------- Event handlers ----------
 
-        private static TextBox MakeTb(int maxLen, bool multiline = false)
+        private void BrowseImageBtn_Click(object? sender, EventArgs e) => PickImage(false);
+
+        private void ClearImageBtn_Click(object? sender, EventArgs e)
         {
-            var tb = new TextBox
+            _imagePathBox.Text = "";
+            if (_imagePreview != null)
             {
-                Dock = DockStyle.Fill,
-                MaxLength = maxLen,
-                Multiline = multiline,
-                ScrollBars = multiline ? ScrollBars.Vertical : ScrollBars.None,
-                AcceptsReturn = multiline,
-                WordWrap = multiline
-            };
-            return tb;
+                _imagePreview.Image?.Dispose();
+                _imagePreview.Image = null;
+            }
         }
 
-        private static RichTextBox MakeRtb(int maxLen)
+        private void BrowseAnimeImageBtn_Click(object? sender, EventArgs e) => PickImage(true);
+
+        private void ClearAnimeImageBtn_Click(object? sender, EventArgs e)
         {
-            var rtb = new RichTextBox
+            _animeImagePathBox.Text = "";
+            if (_animeImagePreview != null)
             {
-                Dock = DockStyle.Fill,
-                MaxLength = maxLen,
-                ScrollBars = RichTextBoxScrollBars.Vertical,
-                WordWrap = true
-            };
-            return rtb;
+                _animeImagePreview.Image?.Dispose();
+                _animeImagePreview.Image = null;
+            }
         }
 
-        private static void AddRow(TableLayoutPanel panel, string label, Control control, int rowHeight = 26)
+        private void TagList_ItemCheck(object? sender, ItemCheckEventArgs e)
         {
-            int row = panel.RowCount;
-            panel.RowCount = row + 1;
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, rowHeight + 8));
-
-            var lbl = new Label
+            int n = 0;
+            for (int i = 0; i < _tagList.Items.Count; i++)
             {
-                Text = label,
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.TopLeft,
-                AutoEllipsis = true,
-                Margin = new Padding(0, 6, 8, 6)
-            };
-            panel.Controls.Add(lbl, 0, row);
-            panel.Controls.Add(control, 1, row);
+                bool willBeChecked = (i == e.Index)
+                    ? (e.NewValue == CheckState.Checked)
+                    : _tagList.GetItemChecked(i);
+                if (willBeChecked) n++;
+            }
+            _tagCountLabel.Text = $"{n} / 20 selected";
+            _tagCountLabel.ForeColor = n > 20 ? Color.Red : SystemColors.ControlText;
         }
+
+        private void NewTagBox_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; AddInlineTag(); }
+        }
+
+        private void AddTagBtn_Click(object? sender, EventArgs e) => AddInlineTag();
+        private void CancelBtn_Click(object? sender, EventArgs e) => Close();
+        private void SaveBtn_Click(object? sender, EventArgs e) => SaveAndClose();
+
+        // RichTextBox has no AcceptsReturn; without this, Enter in the Extra
+        // Details box activates the form's AcceptButton (Save) instead of
+        // inserting a newline.
+        private void ExtraBox_Enter(object? sender, EventArgs e) => AcceptButton = null;
+        private void ExtraBox_Leave(object? sender, EventArgs e) => AcceptButton = _saveBtn;
+
+        // ---------- Image handling ----------
 
         private void PickImage(bool anime)
         {
@@ -569,7 +248,7 @@ namespace CharacterLibrary.Forms
 
             _scenarioBox.Text = Normalize(c.Scenario);
             _additionalBox.Text = Normalize(c.AdditionalPersonalityDetails);
-            _extraBox.Text = Normalize(c.ExtraDetails);
+            SetTextWithoutRedraw(_extraBox, Normalize(c.ExtraDetails));
 
             var mine = (c.CharacterTags ?? new List<CharacterTag>())
                 .Select(ct => ct.TagId)
@@ -695,5 +374,30 @@ namespace CharacterLibrary.Forms
 
         private static string? NullIfEmpty(string? s) =>
             string.IsNullOrWhiteSpace(s) ? null : s;
+
+        // ---------- Large-text load performance ----------
+
+        private const int WM_SETREDRAW = 0x000B;
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, bool wParam, IntPtr lParam);
+
+        /// <summary>
+        /// Suspends repaint while replacing a large amount of text (e.g. the 100k-char
+        /// Extra Details box); avoids the visible stall/redraw-per-line cost on load.
+        /// </summary>
+        private static void SetTextWithoutRedraw(RichTextBox box, string text)
+        {
+            SendMessage(box.Handle, WM_SETREDRAW, false, IntPtr.Zero);
+            try
+            {
+                box.Text = text;
+            }
+            finally
+            {
+                SendMessage(box.Handle, WM_SETREDRAW, true, IntPtr.Zero);
+                box.Invalidate();
+            }
+        }
     }
 }
